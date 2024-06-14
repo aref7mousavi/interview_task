@@ -1,16 +1,7 @@
-to start services: docker compose up
+for tasks 1 and 2
 
-you can change required aggregations and data.csv in user_data directory.
+you can change your directory and by running their dockerfile
 
-client api port is 8080
-endpoint is /api/
-request method is POST
-e.g. http://localhost:8080/api/
+you can have results
 
-this application contains:
-postgresql
-redis
-celery
-csv_reader
-agweb (service to create aggregations)
-client (web service)
+for task 3 please read readme file in its directory
