@@ -1,7 +1,7 @@
 from django.urls import path
 
-from client.api import APIViewSet
+from client.api import ClientAPIViewSet
 
 urls = [
-    path('1/', APIViewSet.as_view(), name='1'),
+    path('api/', ClientAPIViewSet.as_view(), name='client-api'),
 ]

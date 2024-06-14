@@ -24,10 +24,18 @@ class City(ABCName):
         db_table = "city"
 
 
-class RawData(models.Model):
+class Site(ABCName):
     city = models.ForeignKey("City", on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = "site"
+        verbose_name_plural = "sites"
+        db_table = "site"
+
+
+class RawData(models.Model):
     day = models.DateTimeField()
-    site = models.CharField(max_length=64)
+    site = models.ForeignKey("Site", on_delete=models.CASCADE)
     kpi_1 = models.FloatField()
     kpi_2 = models.FloatField()
     kpi_3 = models.FloatField()
@@ -67,7 +75,7 @@ class AggregateModel(models.Model):
         (MIN, "MIN"),
         (MAX, "MAX"),
     )
-
+    site = models.ForeignKey("Site", on_delete=models.CASCADE, null=True, blank=True)
     city = models.ForeignKey("City", on_delete=models.CASCADE, null=True, blank=True)
     province = models.ForeignKey("Province", on_delete=models.CASCADE, null=True, blank=True)
     kpi = models.CharField(max_length=8)
@@ -79,6 +87,9 @@ class AggregateModel(models.Model):
         verbose_name = "Aggregate Model"
         verbose_name_plural = "Aggregate Models"
         db_table = "aggregate_model"
+
+    def __str__(self):
+        return f"{self.kpi} - {self.site} - {self.city} - {self.province} - {self.value}"
 
 
 # class SumAggregateModel(ABCAggregateModel):

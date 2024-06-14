@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    volumes:
+      - postgres_data1:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_DB: city
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d city"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"  # Expose Redis port if needed
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  agcelery:
+    build:
+      context: .
+      dockerfile: ag_creator/celery_Dockerfile
+      args:
+        REQUIREMENTS_PATH: ..
+    command: ["celery", "-A", "ag_creator", "worker", "-l", "info"]
+    healthcheck:
+      test: [ "CMD", "celery", "-A", "ag_creator", "status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP: ag_creator
+      DEFAULT_DB_NAME: city
+      DEFAULT_DB_USER: postgres
+      DEFAULT_DB_PASSWORD: postgres
+      DEFAULT_DB_HOST: db
+      DEFAULT_DB_PORT: 5432
+      DEFAULT_REDIS_HOST: redis
+
+  agweb:
+    build:
+      context: .
+      dockerfile: ag_creator/ag_Dockerfile
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      db:
+        condition: service_healthy
+      agcelery:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      APP: ag_creator
+      DEFAULT_DB_NAME: city
+      DEFAULT_DB_USER: postgres
+      DEFAULT_DB_PASSWORD: postgres
+      DEFAULT_DB_HOST: db
+      DEFAULT_DB_PORT: 5432
+      DEFAULT_REDIS_HOST: redis
+
+  csv:
+    build:
+      context: .
+      dockerfile: csv_reader/csv_Dockerfile
+    command: ["python", "manage.py", "init_csv"]
+    depends_on:
+      db:
+        condition: service_healthy
+      agweb:
+        condition: service_healthy
+    environment:
+      APP: csv_reader
+      AGWEB_URL: agweb
+      DEFAULT_DB_NAME: city
+      DEFAULT_DB_USER: postgres
+      DEFAULT_DB_PASSWORD: postgres
+      DEFAULT_DB_HOST: db
+      DEFAULT_DB_PORT: 5432
+
+  client:
+    build:
+      context: .
+      dockerfile: client/client_Dockerfile
+    command: [ "python", "manage.py", "runserver", "0.0.0.0:8080" ]
+    depends_on:
+      db:
+        condition: service_healthy
+      agweb:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      APP: client
+      DEFAULT_DB_NAME: city
+      DEFAULT_DB_USER: postgres
+      DEFAULT_DB_PASSWORD: postgres
+      DEFAULT_DB_HOST: db
+      DEFAULT_DB_PORT: 5432
+
+volumes:
+  postgres_data1:

@@ -1,4 +1,7 @@
 django==4.2
 python-decouple
-'psycopg[binary]'
+psycopg[binary]
 djangorestframework
+celery
+redis
+requests

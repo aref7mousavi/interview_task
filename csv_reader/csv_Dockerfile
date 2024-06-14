@@ -12,14 +12,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /app/
 
-COPY entrypoint.sh /app/entrypoint.sh
+RUN pwd
+RUN ls -la
+RUN rm -r ag_creator client user_data/methods.py
+RUN chmod +x /app/csv_reader/entrypoint.sh
+ENTRYPOINT ["/app/csv_reader/entrypoint.sh"]
 
-RUN chmod +x /app/entrypoint.sh
-
-
-EXPOSE 8000
-
-ENTRYPOINT ["/app/entrypoint.sh"]
-
-# Command to run the application
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["python", "manage.py", "init_csv"]
